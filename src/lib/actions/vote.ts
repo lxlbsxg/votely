@@ -2,28 +2,55 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calculateRVS } from "@/lib/rvs";
+import { recomputeUserProfile } from "@/lib/profileScoring";
 import { VoteType } from "@/generated/prisma/client";
 
-export async function castVote(contentId: string, type: VoteType) {
+export async function castVote(
+  contentId: string,
+  type: VoteType,
+  shownAt: number,
+) {
   const session = await auth();
   if (!session) {
     throw new Error("Must be signed in to vote");
   }
 
-  await prisma.vote.upsert({
+  const userId = session.user.id;
+  const votedAt = Date.now();
+  const latencyMs = Math.max(0, votedAt - shownAt);
+  const rvs = calculateRVS(latencyMs);
+
+  const vote = await prisma.vote.upsert({
     where: {
-      userId_contentId: {
-        userId: session.user.id,
-        contentId,
-      },
+      userId_contentId: { userId, contentId },
     },
+    create: { userId, contentId, type },
+    update: { type },
+  });
+
+  await prisma.voteEvent.upsert({
+    where: { voteId: vote.id },
     create: {
-      userId: session.user.id,
+      voteId: vote.id,
+      userId,
       contentId,
-      type,
+      shownAt: new Date(shownAt),
+      votedAt: new Date(votedAt),
+      latencyMs,
+      rvs,
     },
     update: {
-      type,
+      shownAt: new Date(shownAt),
+      votedAt: new Date(votedAt),
+      latencyMs,
+      rvs,
     },
   });
+
+  try {
+    await recomputeUserProfile(userId);
+  } catch (error) {
+    console.error("Failed to recompute user profile", error);
+  }
 }

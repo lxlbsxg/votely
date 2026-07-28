@@ -48,10 +48,12 @@ model User {
   image         String?
   isAnonymous   Boolean   @default(false)
 
-  accounts Account[]
-  sessions Session[]
-  contents Content[]
-  votes    Vote[]
+  accounts   Account[]
+  sessions   Session[]
+  contents   Content[]
+  votes      Vote[]
+  voteEvents VoteEvent[]
+  profile    UserProfile?
 
   createdAt DateTime @default(now())
 }
@@ -66,8 +68,9 @@ model Content {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  votes  Vote[]
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes      Vote[]
+  voteEvents VoteEvent[]
 
   @@index([authorId])
   @@index([isPublic, createdAt])
@@ -86,10 +89,44 @@ model Vote {
   type      VoteType
   createdAt DateTime @default(now())
 
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  event   VoteEvent?
+
+  @@unique([userId, contentId])
+}
+
+// Records when a piece of content was shown vs. when the user actually
+// voted on it, so response latency can be turned into an RVS score.
+model VoteEvent {
+  id        String   @id @default(cuid())
+  voteId    String   @unique
+  userId    String
+  contentId String
+  shownAt   DateTime
+  votedAt   DateTime
+  latencyMs Int
+  rvs       Float
+
+  vote    Vote    @relation(fields: [voteId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, contentId])
+  @@index([userId])
+}
+
+// Aggregated per-user scoring, recomputed after each vote (see
+// src/lib/profileScoring.ts). Not a real behavioral model yet -
+// placeholder heuristics until the product's real formulas are provided.
+model UserProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  emoScore           Float    @default(0)
+  stanceBias         Float    @default(0)
+  emotionSensitivity Float    @default(0)
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

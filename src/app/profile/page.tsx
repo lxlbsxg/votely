@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { deriveProfileTags } from "@/lib/profileScoring";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -7,6 +9,11 @@ export default async function ProfilePage() {
   if (!session) {
     redirect("/login");
   }
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId: session.user.id },
+  });
+  const tags = profile ? deriveProfileTags(profile) : [];
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-16">
@@ -26,6 +33,36 @@ export default async function ProfilePage() {
             <dd>{session.user.isAnonymous ? "Guest" : "Registered"}</dd>
           </div>
         </dl>
+
+        <div className="mt-8 rounded-xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-900">
+          <h2 className="text-sm font-medium text-zinc-500">EmoScore</h2>
+          {profile ? (
+            <>
+              <p className="mt-1 text-3xl font-semibold">
+                {Math.round(profile.emoScore * 100)}
+                <span className="text-base font-normal text-zinc-500">
+                  {" "}
+                  / 100
+                </span>
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-black/[.06] px-3 py-1 text-xs dark:bg-white/[.1]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-500">
+              Vote on some opinions in the Feed to build your profile.
+            </p>
+          )}
+        </div>
+
         <form
           action={async () => {
             "use server";

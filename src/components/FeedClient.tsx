@@ -15,9 +15,14 @@ export function FeedClient({ initialItems, loadMore }: Props) {
   const [index, setIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
   const fetchingRef = useRef(false);
+  const shownAtRef = useRef(0);
 
   const current = items[index];
   const remaining = items.length - index;
+
+  useEffect(() => {
+    shownAtRef.current = Date.now();
+  }, [current?.id]);
 
   useEffect(() => {
     if (remaining > 2 || remaining === 0 || fetchingRef.current) return;
@@ -37,9 +42,10 @@ export function FeedClient({ initialItems, loadMore }: Props) {
   function vote(type: VoteType) {
     if (!current) return;
     const contentId = current.id;
+    const shownAt = shownAtRef.current;
     setIndex((i) => i + 1);
     startTransition(async () => {
-      await castVote(contentId, type);
+      await castVote(contentId, type, shownAt);
     });
   }
 
