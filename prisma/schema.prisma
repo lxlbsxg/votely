@@ -75,6 +75,9 @@ model Content {
   isPublic    Boolean  @default(true)
   isAnonymous Boolean  @default(false)
   tags        String[] @default([])
+  // Claude-extracted { stance, topic, emotion, keywords[] } - see
+  // src/lib/analysis.ts. Null until the async analysis call completes.
+  analysis    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

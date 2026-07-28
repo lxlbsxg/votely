@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedImage } from "@/lib/upload";
+import { analyzeContent } from "@/lib/analysis";
 
 export async function createContent(formData: FormData) {
   const session = await auth();
@@ -34,7 +35,7 @@ export async function createContent(formData: FormData) {
     imageUrl = await saveUploadedImage(image);
   }
 
-  await prisma.content.create({
+  const content = await prisma.content.create({
     data: {
       authorId: session.user.id,
       body,
@@ -44,6 +45,12 @@ export async function createContent(formData: FormData) {
       tags,
     },
   });
+
+  try {
+    await analyzeContent(content.id, body);
+  } catch (error) {
+    console.error("Failed to analyze content", error);
+  }
 
   redirect("/");
 }
