@@ -50,8 +50,36 @@ model User {
 
   accounts Account[]
   sessions Session[]
+  contents Content[]
+  votes    Vote[]
 
   createdAt DateTime @default(now())
+}
+
+model Content {
+  id        String   @id @default(cuid())
+  authorId  String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes  Vote[]
+
+  @@index([authorId])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  contentId String
+  value     Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId])
 }
 
 model VerificationToken {
