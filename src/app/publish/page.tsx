@@ -1,20 +1,37 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { createContent } from "@/lib/actions/content";
 
-export default async function PublishPage() {
+type Props = {
+  searchParams: Promise<{ assetId?: string }>;
+};
+
+export default async function PublishPage({ searchParams }: Props) {
   const session = await auth();
 
   if (!session) {
     redirect("/login");
   }
 
+  const { assetId } = await searchParams;
+  const asset = assetId
+    ? await prisma.asset.findUnique({ where: { id: assetId } })
+    : null;
+
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-16">
       <div className="w-full max-w-xl">
         <h1 className="text-2xl font-semibold">Publish an opinion</h1>
+        {asset && (
+          <p className="mt-1 text-sm text-zinc-500">
+            About {asset.name} ({asset.symbol})
+          </p>
+        )}
 
         <form action={createContent} className="mt-6 flex flex-col gap-4">
+          {asset && <input type="hidden" name="assetId" value={asset.id} />}
+
           <textarea
             name="body"
             required

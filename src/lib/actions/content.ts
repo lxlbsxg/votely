@@ -35,6 +35,11 @@ export async function createContent(formData: FormData) {
     imageUrl = await saveUploadedImage(image);
   }
 
+  const assetId = (formData.get("assetId") as string | null)?.trim() || null;
+  const asset = assetId
+    ? await prisma.asset.findUnique({ where: { id: assetId } })
+    : null;
+
   const content = await prisma.content.create({
     data: {
       authorId: session.user.id,
@@ -43,6 +48,7 @@ export async function createContent(formData: FormData) {
       isPublic,
       isAnonymous,
       tags,
+      assetId: asset?.id ?? null,
     },
   });
 
@@ -52,5 +58,12 @@ export async function createContent(formData: FormData) {
     console.error("Failed to analyze content", error);
   }
 
+  if (asset) {
+    const path =
+      asset.type === "STOCK"
+        ? `/assets/stock/${asset.providerId}`
+        : `/assets/crypto/${asset.providerId}`;
+    redirect(path);
+  }
   redirect("/");
 }

@@ -42,6 +42,9 @@ export default async function RootLayout({
                 <Link href="/hot" className="hover:underline">
                   Hot
                 </Link>
+                <Link href="/assets" className="hover:underline">
+                  Assets
+                </Link>
                 <Link href="/publish" className="hover:underline">
                   Publish
                 </Link>

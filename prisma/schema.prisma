@@ -78,15 +78,18 @@ model Content {
   // Claude-extracted { stance, topic, emotion, keywords[] } - see
   // src/lib/analysis.ts. Null until the async analysis call completes.
   analysis    Json?
+  assetId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  asset      Asset?      @relation(fields: [assetId], references: [id], onDelete: SetNull)
   votes      Vote[]
   voteEvents VoteEvent[]
   forwards   Forward[]
 
   @@index([authorId])
+  @@index([assetId])
   @@index([isPublic, createdAt])
 }
 
@@ -266,4 +269,27 @@ model Forward {
   @@index([contentId])
   @@index([toUserId])
   @@index([toGroupId])
+}
+
+enum AssetType {
+  STOCK
+  CRYPTO
+}
+
+// A company/asset homepage subject. `providerId` is what's actually sent to
+// the market-data API - the stock ticker for STOCK (same as symbol), or the
+// CoinGecko coin slug (e.g. "bitcoin") for CRYPTO, since crypto tickers and
+// provider ids differ. Created lazily on first page view (see
+// src/lib/actions/asset.ts) rather than needing an admin UI.
+model Asset {
+  id         String    @id @default(cuid())
+  type       AssetType
+  symbol     String
+  providerId String
+  name       String
+  createdAt  DateTime  @default(now())
+
+  contents Content[]
+
+  @@unique([type, providerId])
 }
