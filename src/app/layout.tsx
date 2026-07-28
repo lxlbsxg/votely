@@ -37,6 +37,11 @@ export default async function RootLayout({
             Votely
           </Link>
           <nav className="flex items-center gap-4 text-sm">
+            {session && (
+              <Link href="/publish" className="hover:underline">
+                Publish
+              </Link>
+            )}
             <Link href="/profile" className="hover:underline">
               Profile
             </Link>

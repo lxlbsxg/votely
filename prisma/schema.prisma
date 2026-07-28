@@ -57,23 +57,33 @@ model User {
 }
 
 model Content {
-  id        String   @id @default(cuid())
-  authorId  String
-  body      String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  authorId    String
+  body        String   @db.Text
+  imageUrl    String?
+  isPublic    Boolean  @default(true)
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   votes  Vote[]
 
   @@index([authorId])
+  @@index([isPublic, createdAt])
+}
+
+enum VoteType {
+  SUPPORT
+  OPPOSE
+  SKIP
 }
 
 model Vote {
   id        String   @id @default(cuid())
   userId    String
   contentId String
-  value     Int
+  type      VoteType
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
