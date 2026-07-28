@@ -10,6 +10,7 @@ export async function castVote(
   contentId: string,
   type: VoteType,
   shownAt: number,
+  forwardId?: string,
 ) {
   const session = await auth();
   if (!session) {
@@ -25,8 +26,8 @@ export async function castVote(
     where: {
       userId_contentId: { userId, contentId },
     },
-    create: { userId, contentId, type },
-    update: { type },
+    create: { userId, contentId, type, forwardId },
+    update: { type, ...(forwardId ? { forwardId } : {}) },
   });
 
   await prisma.voteEvent.upsert({

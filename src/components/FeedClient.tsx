@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { FeedItem } from "@/lib/actions/feed";
 import { castVote } from "@/lib/actions/vote";
+import { ForwardButton } from "@/components/ForwardButton";
 import type { VoteType } from "@/generated/prisma/client";
 
 type Props = {
@@ -62,9 +63,12 @@ export function FeedClient({ initialItems, loadMore }: Props) {
   return (
     <div className="mt-8 flex flex-col gap-4">
       <div className="rounded-xl border border-black/[.08] bg-white p-6 shadow-sm dark:border-white/[.145] dark:bg-zinc-900">
-        <p className="text-xs text-zinc-500">
-          {current.isAnonymous ? "Anonymous" : (current.authorName ?? "Someone")}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-zinc-500">
+            {current.isAnonymous ? "Anonymous" : (current.authorName ?? "Someone")}
+          </p>
+          <ForwardButton contentId={current.id} />
+        </div>
         {current.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img

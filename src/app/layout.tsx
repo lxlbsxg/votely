@@ -38,9 +38,20 @@ export default async function RootLayout({
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             {session && (
-              <Link href="/publish" className="hover:underline">
-                Publish
-              </Link>
+              <>
+                <Link href="/publish" className="hover:underline">
+                  Publish
+                </Link>
+                <Link href="/chat" className="hover:underline">
+                  Chat
+                </Link>
+                <Link href="/friends" className="hover:underline">
+                  Friends
+                </Link>
+                <Link href="/groups" className="hover:underline">
+                  Groups
+                </Link>
+              </>
             )}
             <Link href="/profile" className="hover:underline">
               Profile
