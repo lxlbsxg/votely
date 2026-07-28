@@ -30,6 +30,13 @@ export default async function PublishPage() {
             className="text-sm"
           />
 
+          <input
+            type="text"
+            name="tags"
+            placeholder="Tags, comma separated (e.g. food, politics)"
+            className="rounded-md border border-black/[.12] bg-white px-4 py-2 text-sm dark:border-white/[.145] dark:bg-black"
+          />
+
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="isPublic" defaultChecked />
             Public (uncheck to keep private)

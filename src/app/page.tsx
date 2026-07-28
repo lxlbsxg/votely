@@ -25,7 +25,7 @@ export default async function FeedPage() {
     );
   }
 
-  const initialItems = await getFeedBatch(undefined, 10);
+  const initialItems = await getFeedBatch([], 10);
 
   return (
     <div className="flex flex-1 flex-col items-center px-6 py-16">

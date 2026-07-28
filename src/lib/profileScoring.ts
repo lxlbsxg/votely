@@ -9,11 +9,16 @@ import { prisma } from "@/lib/prisma";
  *   one-sided their votes are, ignoring skips.
  * - emotionSensitivity: fraction of votes that were "fast" reactions
  *   (rvs === 0.9), 0-1 - how often they react instantly vs. deliberate.
+ * - interestTags: top 5 tags (by frequency) among content this user has
+ *   voted SUPPORT on - feeds the Feed recommendation's "similar" bucket.
  */
 export async function recomputeUserProfile(userId: string) {
   const events = await prisma.voteEvent.findMany({
     where: { userId },
-    include: { vote: { select: { type: true } } },
+    include: {
+      vote: { select: { type: true } },
+      content: { select: { tags: true } },
+    },
   });
 
   if (events.length === 0) return;
@@ -36,10 +41,22 @@ export async function recomputeUserProfile(userId: string) {
   ).length;
   const emotionSensitivity = fastReactionCount / events.length;
 
+  const tagCounts = new Map<string, number>();
+  for (const event of events) {
+    if (event.vote.type !== "SUPPORT") continue;
+    for (const tag of event.content.tags) {
+      tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+    }
+  }
+  const interestTags = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag]) => tag);
+
   await prisma.userProfile.upsert({
     where: { userId },
-    create: { userId, emoScore, stanceBias, emotionSensitivity },
-    update: { emoScore, stanceBias, emotionSensitivity },
+    create: { userId, emoScore, stanceBias, emotionSensitivity, interestTags },
+    update: { emoScore, stanceBias, emotionSensitivity, interestTags },
   });
 }
 

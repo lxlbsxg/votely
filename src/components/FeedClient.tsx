@@ -8,7 +8,7 @@ import type { VoteType } from "@/generated/prisma/client";
 
 type Props = {
   initialItems: FeedItem[];
-  loadMore: (cursor: string) => Promise<FeedItem[]>;
+  loadMore: (excludeIds: string[]) => Promise<FeedItem[]>;
 };
 
 export function FeedClient({ initialItems, loadMore }: Props) {
@@ -28,11 +28,9 @@ export function FeedClient({ initialItems, loadMore }: Props) {
   useEffect(() => {
     if (remaining > 2 || remaining === 0 || fetchingRef.current) return;
 
-    const lastId = items[items.length - 1]?.id;
-    if (!lastId) return;
-
     fetchingRef.current = true;
-    loadMore(lastId).then((more) => {
+    const excludeIds = items.map((item) => item.id);
+    loadMore(excludeIds).then((more) => {
       if (more.length > 0) {
         setItems((prev) => [...prev, ...more]);
       }

@@ -19,6 +19,15 @@ export async function createContent(formData: FormData) {
   const isPublic = formData.get("isPublic") === "on";
   const isAnonymous = formData.get("isAnonymous") === "on";
 
+  const tags = Array.from(
+    new Set(
+      (formData.get("tags") as string | null)
+        ?.split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean) ?? [],
+    ),
+  );
+
   let imageUrl: string | null = null;
   const image = formData.get("image");
   if (image instanceof File && image.size > 0) {
@@ -32,6 +41,7 @@ export async function createContent(formData: FormData) {
       imageUrl,
       isPublic,
       isAnonymous,
+      tags,
     },
   });
 
